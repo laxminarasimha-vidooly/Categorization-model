@@ -1,3 +1,4 @@
+#Importing libraries
 from sklearn import svm
 from sklearn.model_selection import train_test_split
 from sklearn.externals import joblib
@@ -29,14 +30,12 @@ from nltk.stem import WordNetLemmatizer
 lemmatizer = WordNetLemmatizer()
 #nltk.download('stopwords')
 import os,sys
-#import Cleaning
-#import translatescrp
+import Cleaning
+import translatescrp
 import pickle
 os.getcwd()
-os.chdir("E:/Laxmi_Rnd/My Laptop/Sub cat data dumps")
 
-
-
+#Text preprocessing
 def clean(transdf):
     regexdf = pd.DataFrame( index=range(len(transdf.index)), columns=["id","Translated","Clean_Translated","sub"])
     regexdf = regexdf.fillna("")
@@ -133,7 +132,7 @@ def clean(transdf):
 #    fnldf.to_csv('D:/Working/Auto-sub cat modelling/SVM/SVM/final_clean.csv', encoding='utf-8')
     return fnldf    
 
-
+#Reading raw text (training)
 data1=pd.read_csv("new_sampled_data.csv",encoding='utf-8')
 data1.head()
 data1=data1.iloc[:,1:4]
@@ -174,14 +173,14 @@ train['sub'].value_counts()
 test['sub'].value_counts()
 #train.head()
 
-train.to_csv("train_5.csv", sep=',', encoding='utf-8')
-test.to_csv("test_5.csv", sep=',', encoding='utf-8')    
+train.to_csv("train.csv", sep=',', encoding='utf-8')
+test.to_csv("test.csv", sep=',', encoding='utf-8')    
 
 # =============================================================================
 # Importing Train
 # =============================================================================
 
-fnldf=pd.read_csv("train_5.csv")
+fnldf=pd.read_csv("train.csv")
 
 np.where(pd.isnull(fnldf))
 
@@ -252,7 +251,7 @@ joblib.dump(id_to_category, open(filename3, 'wb'))
 # Importing Clean Test
 # =============================================================================
 
-testdf=pd.read_csv("test_5.csv")
+testdf=pd.read_csv("test.csv")
 len(testdf)
 testdf.head()
 testdf=testdf.iloc[:,1:5]
@@ -267,35 +266,6 @@ X2_test.shape
 # prediction
 # =============================================================================
 y2_pred=model2.predict(X2_test)
-
-#print np.unique(y2_pred,return_counts=True)
-#
-#filename = 'finalized_model5.sav'
-#filename1 = 'tfidf5.sav'
-#
-#loaded_model = pickle.load(open(filename, 'rb'))
-#loaded_tfidf = pickle.load(open(filename1, 'rb'))
-#
-#X3_test = loaded_tfidf.transform(testdf.CleanMeta).toarray()
-#X3_test.shape
-#y3_pred=loaded_model.predict(X3_test)
-#print np.unique(y3_pred,ret-urn_counts=True)
-#
-#category_to_id
-#id_to_category[y3_pred[1]]
-################################################
-#from sklearn.feature_selection import chi2
-#import numpy as np
-#N = 2
-#for sub, category_id in sorted(category_to_id.items()):
-#    features_chi2 = chi2(features, labels == category_id)
-#    indices = np.argsort(features_chi2[0])
-#    feature_names = np.array(tfidf.get_feature_names())[indices]
-#    unigrams = [v for v in feature_names if len(v.split(' ')) == 1]
-#    bigrams = [v for v in feature_names if len(v.split(' ')) == 2]
-#    print("# '{}':".format(sub))
-#    print(" . Most correlated unigrams:\n. {}".format('\n. '.join(unigrams[-N:])))
-#    print(" . Most correlated bigrams:\n. {}".format('\n. '.join(bigrams[-N:])))
 
 # =============================================================================
 # Reading Video Ids
@@ -312,15 +282,7 @@ def testid(resp):
     for i in range(len(testids)):
         file1.iloc[i,0]=testids.iloc[i,0]
         file1.iloc[i,1]=Cleaning.vidmeta(testids.iloc[i,0])
-    #    if len(file3.iloc[i,1])!=0:
-    ##        file3.iloc[i,2]=Cleaning.singletxt(file3.iloc[i,1])
-    ##        file3.iloc[i,2]=Cleaning.singletxtfrn(file3.iloc[i,1],"auto")
-    #        file3.iloc[i,2]=translatescrp.translatescrp(file3.iloc[i,1])
-    #        file3.iloc[i,2]=Cleaning.translatepkg(file3.iloc[i,1])
-    #    file3.iloc[i,3]=df.iloc[i,2]
-        print i
-    #    print file3.iloc[i,1]
-    #    print file3.iloc[i,2]
+
         
     if resp==1:
         file2=translatescrp.translatescrp(file1)
@@ -364,7 +326,7 @@ def testid(resp):
     file3['fin_pred'] = fin_s
     return file3
     
-
+#Calling prediction function along with translation parameter
 file3=testid(1)
 print file3['fin_pred']  
 
@@ -397,43 +359,6 @@ testdf.head()
 # exporting predicted test
 # =============================================================================
 testdf.to_csv("test_pred_subcat.csv", sep='\t', encoding='utf-8')
-
-# =============================================================================
-# Misclassification Error Category wise
-# =============================================================================
-actual_count = pd.DataFrame(testdf['sub'].value_counts().reset_index())
-actual_count.columns = ['sub', 'act_count']
-print(actual_count)
-
-pred_count = pd.DataFrame(testdf['pred_sub'].value_counts().reset_index())
-pred_count.columns = ['sub', 'pred_count']
-print(pred_count)
-
-wrong_pred_count1=testdf[(testdf['actal_cat_id']!=testdf['pred_cat_id'])]
-len(wrong_pred_count1)
-
-wrong_act_count1=testdf[(testdf['pred_cat_id']!=testdf['actal_cat_id'])]
-len(wrong_act_count1)
-
-
-pred_count1 = pd.DataFrame(wrong_pred_count1['pred_sub'].value_counts().reset_index())
-pred_count1.columns = ['sub', 'wrong_pred_count']
-print(pred_count1)
-
-act_count1 = pd.DataFrame(wrong_act_count1['sub'].value_counts().reset_index())
-act_count1.columns = ['sub', 'wrong_act_count']
-print(act_count1)
-
-
-result=actual_count.merge(pred_count,on='sub',left_index=True,  how='left')
-result=result.merge(pred_count1,on='sub',left_index=True,  how='left')
-result=result.merge(act_count1,on='sub',left_index=True,  how='left')
-result=result.fillna(0)
-
-result['wrongly_classified%']=(result['wrong_pred_count']*100)/result['act_count']
-result['should_be_act_but_not%']=(result['wrong_act_count']*100)/result['pred_count']
-result=result.sort_values(['wrongly_classified%'],ascending=0)
-print result
 
 ###############################################################################
 #model confidence measure
@@ -523,111 +448,3 @@ train_score=model2.score (X2_train, y2_train)
 # print test accuracy and training accuracy
 # =============================================================================
 print("Test accuracy is", accuracy, "trainning accuracy is",train_score)
-# =============================================================================
-# Learning Curve
-# =============================================================================
-
-from sklearn.model_selection import learning_curve
-from sklearn.model_selection import ShuffleSplit
-
-def plot_learning_curve(estimator, title, X, y, ylim=None, xlim=None, cv=None,
-                        n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5), verbose=1):
-    
-    plt.figure()
-    plt.title(title)
-    if ylim is not None:
-        plt.ylim(*ylim)
-    if xlim is not None:
-        plt.xlim(*xlim)
-    plt.xlabel("Training examples")
-    plt.ylabel("Score")
-    train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=cv, n_jobs=n_jobs, train_sizes=train_sizes)
-    train_scores_mean = np.mean(train_scores, axis=1)
-    train_scores_std = np.std(train_scores, axis=1)
-    test_scores_mean = np.mean(test_scores, axis=1)
-    test_scores_std = np.std(test_scores, axis=1)
-    plt.grid()
-
-    plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
-                     train_scores_mean + train_scores_std, alpha=0.1,
-                     color="r")
-    plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
-                     test_scores_mean + test_scores_std, alpha=0.1, color="g")
-    plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
-             label="Training score")
-    plt.plot(train_sizes, test_scores_mean, 'o-', color="g",
-             label="Cross-validation score")
-
-    plt.legend(loc="best")
-    return plt
-
-
-X, y = features, labels
-#cv=X2_test
-title = "Learning Curves (SVM)"
-# SVC is more expensive so we do a lower number of CV iterations:
-cv = ShuffleSplit(n_splits=1, test_size=0.02, random_state=0)
-estimator = svm.SVC(kernel='linear')
-plot_learning_curve(estimator, title, X, y, (0.7, 1.2),(0,13000), cv)
-plt.show()
-
-
-
-####################################################
-#plotting validation curve
-###################################################
-import matplotlib.pyplot as plt
-import numpy as np
-from sklearn.svm import SVC
-from sklearn.model_selection import validation_curve
-
-X, y = features, labels
-
-param_range = np.logspace(-10, 10, 10)
-train_scores, test_scores = validation_curve(
-    svm.SVC(kernel='linear'), X, y, param_name="gamma", param_range=param_range,
-    cv=2, scoring="accuracy", n_jobs=1)
-train_scores_mean = np.mean(train_scores, axis=1)
-train_scores_std = np.std(train_scores, axis=1)
-test_scores_mean = np.mean(test_scores, axis=1)
-test_scores_std = np.std(test_scores, axis=1)
-
-plt.title("Validation Curve with SVM")
-plt.xlabel("$\gamma$")
-plt.ylabel("Score")
-plt.ylim(0.5, 1.5)
-lw = 2
-plt.semilogx(param_range, train_scores_mean, label="Training score",
-             color="darkorange", lw=lw)
-plt.fill_between(param_range, train_scores_mean - train_scores_std,
-                 train_scores_mean + train_scores_std, alpha=0.2,
-                 color="darkorange", lw=lw)
-plt.semilogx(param_range, test_scores_mean, label="Cross-validation score",
-             color="navy", lw=lw)
-plt.fill_between(param_range, test_scores_mean - test_scores_std,
-                 test_scores_mean + test_scores_std, alpha=0.2,
-                 color="navy", lw=lw)
-plt.legend(loc="best")
-plt.show()
-
-###########################
-#import numpy as np
-#from sklearn.model_selection import validation_curve
-#from sklearn.svm import SVC
-#X, y = features, labels
-#indices = np.arange(y.shape[0])
-#np.random.shuffle(indices)
-#X, y = X[indices], y[indices]
-#
-#train_scores, valid_scores = validation_curve(svm.SVC(kernel='linear'), X, y, "gamma",
-#                                               np.logspace(-6, -1, 5))
-#
-#from sklearn.model_selection import learning_curve
-#from sklearn.svm import SVC
-#train_sizes, train_scores, valid_scores = learning_curve(
-#     svm.SVC(kernel='linear'), X, y, train_sizes=[50, 80, 110], cv=5)
-#
-
-##############################
-
